@@ -1,0 +1,46 @@
+[
+    {
+        "active": true,
+        "budget": 1500.0,
+        "id": 1,
+        "name": "Sport Shoes Campaign",
+        "tags": [
+            "sports",
+            "shoes",
+            "fitness"
+        ]
+    },
+    {
+        "active": false,
+        "budget": 3000.0,
+        "id": 2,
+        "name": "Gaming Laptop Campaign",
+        "tags": [
+            "gaming",
+            "laptop",
+            "electronics"
+        ]
+    },
+    {
+        "active": true,
+        "budget": 2200.0,
+        "id": 3,
+        "name": "Travel Deals Campaign",
+        "tags": [
+            "travel",
+            "flights",
+            "vacation"
+        ]
+    },
+    {
+        "active": true,
+        "budget": 1800.0,
+        "id": 4,
+        "name": "Smartphone Launch Campaign",
+        "tags": [
+            "smartphone",
+            "electronics",
+            "mobile"
+        ]
+    }
+]
