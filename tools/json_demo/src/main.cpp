@@ -40,13 +40,13 @@ void print_campaigns(const std::vector<Campaign>& campaigns) {
     std::cout << "Campaign list:\n\n";
 
     for (const auto& campaign : campaigns) {
-        std::cout << "ID: " << campaign.id << "\n";
-        std::cout << "Name: " << campaign.name << "\n";
-        std::cout << "Budget: " << campaign.budget << "\n";
-        std::cout << "Active: " << (campaign.active ? "true" : "false") << "\n";
+        std::cout << "ID: " << campaign.get_id() << "\n";
+        std::cout << "Name: " << campaign.get_name() << "\n";
+        std::cout << "Budget: " << campaign.get_budget() << "\n";
+        std::cout << "Active: " << (campaign.is_active() ? "true" : "false") << "\n";
         std::cout << "Tags: ";
 
-        for (const auto& tag : campaign.tags) {
+        for (const auto& tag : campaign.get_tags()) {
             std::cout << tag << ' ';
         }
 
@@ -76,7 +76,7 @@ int main() {
         campaigns.push_back(new_campaign);
 
         std::cout << "\nNew campaign added:\n";
-        std::cout << new_campaign.name << "\n\n";
+        std::cout << new_campaign.get_name() << "\n\n";
 
         save_campaigns(filename, campaigns);
 
