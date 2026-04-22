@@ -66,7 +66,7 @@
 - [ ] Learn compilation model in C++
 
 ## OOP basics
-- [ ] Learn classes
+- [+] Learn classes
 - [ ] Learn structs
 - [ ] Learn constructors
 - [ ] Learn destructors
