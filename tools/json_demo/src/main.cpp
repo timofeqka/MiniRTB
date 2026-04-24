@@ -7,7 +7,7 @@
 #include <filesystem>
 
 #include <nlohmann/json.hpp>
-#include "minirtb/domain/campaign.hpp"
+#include "minirtb/campaign.hpp"
 
 using json = nlohmann::json;
 using minirtb::domain::Campaign;

@@ -3,7 +3,7 @@ add_executable(json_demo
 )
 
 target_include_directories(json_demo PRIVATE
-    ${PROJECT_SOURCE_DIR}/src/domain/include
+    ${PROJECT_SOURCE_DIR}/src/common/include
     ${PROJECT_SOURCE_DIR}/third_party/nlohmann_json/include
 )
 

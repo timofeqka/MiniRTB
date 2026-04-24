@@ -28,7 +28,6 @@ public:
         data_     = nullptr;
         capacity_ = 0;
         size_     = 0; 
-        std::cout << "Vector(): " << "\n";
     }
 
     T* data(){
