@@ -30,6 +30,52 @@ public:
         size_     = 0; 
     }
 
+    Vector(const Vector& other) {
+        data_ = new T[other.capacity_];
+        for (size_t i = 0; i < other.size_; ++i){
+            data_[i] = other.data_[i];
+        }
+        capacity_ = other.capacity_;
+        size_     = other.size_;
+    }
+
+    Vector(Vector&& other) {
+        data_     = other.data_;
+        capacity_ = other.capacity_;
+        size_     = other.size_;
+
+        other.data_     = nullptr;
+        other.capacity_ = 0;
+        other.size_     = 0;
+    }
+
+    Vector& operator=(const Vector& other) {
+        if (this != &other) {
+            delete[] data_;
+            data_ = new T[other.capacity_];
+            for (size_t i = 0; i < other.size_; ++i){
+                data_[i] = other.data_[i];
+            }
+            capacity_ = other.capacity_;
+            size_     = other.size_;
+        }
+        return *this;
+    }
+
+    Vector& operator=(Vector&& other) {
+        if (this != &other) {
+            delete[] data_;
+            data_     = other.data_;
+            capacity_ = other.capacity_;
+            size_     = other.size_;
+
+            other.data_     = nullptr;
+            other.capacity_ = 0;
+            other.size_     = 0;
+        }
+        return *this;
+    }
+    
     T* data(){
         return data_;
     }
@@ -91,12 +137,12 @@ public:
         data_[pos] = value;
         ++size_;
     }
+
+
 };
 }
-// references to be initialize
-// unit test for this code in "tests" folder, google tests
-// 5. Item 23 std::move FRIDAY
-// copy constuctor and copy assignment - gpt FRIDAY
+
+
 
 
 

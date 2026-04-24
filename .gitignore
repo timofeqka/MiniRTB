@@ -43,3 +43,5 @@ Makefile
 # OS files
 .DS_Store
 Thumbs.db
+
+Schedule.md
