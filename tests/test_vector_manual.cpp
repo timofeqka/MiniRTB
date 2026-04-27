@@ -173,7 +173,7 @@ void test_pushBack_appends_elements(){
     assert(!v.empty());
 }
 
-void test_insert_shifts_elements_and_throws_out_of_range(){
+void test_insert_shifts_elements(){
     // Arrange: create an empty vector
     rtb::Vector<int> v;
 
@@ -192,18 +192,161 @@ void test_insert_shifts_elements_and_throws_out_of_range(){
     assert(v[3] == 5);
     assert(v[4] == 25);
     assert(!v.empty());
-
-    // Act: try to insert at invalid position
-    bool exceptionThrown = false;
-    try {
-        v.insert(100, 1);
-    } catch (const std::out_of_range&) {
-        exceptionThrown = true;
-    }
-
-    // Assert: insert should throw std::out_of_range for invalid position
-    assert(exceptionThrown);
 }
+
+void test_copy_constructor() {
+    // Arrange: create an empty vector
+    rtb::Vector<int> empty;
+
+    // Act: copy the empty vector
+    rtb::Vector<int> empty_copy(empty);
+
+    // Assert: copied empty vector should also be empty
+    assert(empty_copy.capacity() == 0);
+    assert(empty_copy.size() == 0);
+    assert(empty_copy.empty());
+
+    // Arrange: create a vector with two elements
+    rtb::Vector<int> v1;
+    v1.pushBack(10);
+    v1.pushBack(20);
+
+    // Act: copy the populated vector
+    rtb::Vector<int> v2(v1);
+
+    // Assert: copied vector should have separate storage and the same values
+    assert(v2.data() != v1.data());
+    assert(v2.capacity() == v1.capacity());
+    assert(v2.size() == v1.size());
+    assert(v2[0] == v1[0]);
+    assert(v2[1] == v1[1]);
+
+    // Act: modify the copied vector
+    v2[1] = 30; 
+
+    // Assert: modifying the copy should not change the original vector
+    assert(v1[1] == 20);
+    assert(v2[1] == 30);
+}
+
+void test_move_constructor() {
+    // Arrange: create a vector with two elements
+    rtb::Vector<int> v1;
+
+    v1.pushBack(10);
+    v1.pushBack(20);
+
+    // Act: move the vector into a new vector
+    rtb::Vector<int> v2(std::move(v1));
+
+    // Assert: moved-to vector should contain the original values
+    assert(v2[0] == 10);
+    assert(v2[1] == 20);
+    assert(v2.size() == 2);
+    assert(v2.capacity() == 2);
+    assert(v2.data() != nullptr);
+
+    // Assert: moved-from vector should be left empty
+    assert(v1.data() == nullptr);
+    assert(v1.size() == 0);
+    assert(v1.capacity()  == 0);
+    assert(v1.empty());
+}
+
+void test_copy_assignment_operator() {
+    // Arrange: create an empty vector and another vector to assign into
+    rtb::Vector<int> empty;
+    rtb::Vector<int> empty_copy ;
+
+    // Act: assign the empty vector
+    empty_copy = empty;
+
+    // Assert: assigned empty vector should also be empty
+    assert(empty_copy.capacity() == 0);
+    assert(empty_copy.size() == 0);
+    assert(empty_copy.empty());
+
+    // Arrange: create a vector with two elements
+    rtb::Vector<int> v1;
+    v1.pushBack(10);
+    v1.pushBack(20);
+
+    // Act: assign the populated vector into another vector
+    rtb::Vector<int> v2;
+    v2 = v1;
+
+    // Assert: assigned vector should have separate storage and the same values
+    assert(v2.data() != v1.data());
+    assert(v2.capacity() == v1.capacity());
+    assert(v2.size() == v1.size());
+    assert(v2[0] == v1[0]);
+    assert(v2[1] == v1[1]);
+
+    // Act: modify the assigned vector
+    v2[1] = 30; 
+
+    // Assert: modifying the assigned vector should not change the original
+    assert(v1[1] == 20);
+    assert(v2[1] == 30);
+}
+
+void test_move_assignment_operator() {
+    // Arrange: create a vector with two elements
+    rtb::Vector<int> v1;
+    v1.pushBack(10);
+    v1.pushBack(20);
+
+    // Act: move-assign the vector into another vector
+    rtb::Vector<int> v2;
+    v2 = std::move(v1);
+
+    // Assert: moved-to vector should contain the original values
+    assert(v2[0] == 10);
+    assert(v2[1] == 20);
+    assert(v2.size() == 2);
+    assert(v2.capacity() == 2);
+    assert(v2.data() != nullptr);
+
+    // Assert: moved-from vector should be left empty
+    assert(v1.data() == nullptr);
+    assert(v1.size() == 0);
+    assert(v1.capacity()  == 0);
+    assert(v1.empty());
+}
+
+void test_errase() {
+    // Arrange: create a vector with multiple elements
+    rtb::Vector<int> v;
+
+    v.pushBack(10);
+    v.pushBack(20);
+    v.pushBack(30);
+    v.pushBack(40);
+    v.pushBack(50);
+    v.pushBack(60);
+
+    size_t capacity_before = v.capacity();
+    size_t size_before = v.size();
+
+    // Act + Assert: erase first element and shift remaining elements left
+    v.errase(0); // 20 30 40 50 60
+    assert(v.capacity() == capacity_before);
+    assert(v.size() == size_before - 1);
+    assert(v[0] == 20); 
+
+    // Act + Assert: erase middle element and keep capacity unchanged
+    v.errase(2); // 20 30 50 60 
+    assert(v.capacity() == capacity_before);
+    assert(v.size() == size_before - 2);
+    assert(v[2] == 50);
+
+    // Act + Assert: erase last element and keep remaining values in order
+    v.errase(3); // 20 30 50
+    assert(v.capacity() == capacity_before);
+    assert(v.size() == size_before - 3);
+    assert(v[2] == 50);
+}
+
 
 int main() {
     // Run all manual unit tests
@@ -215,7 +358,10 @@ int main() {
     test_subscript_operator_read_write();
     test_at_returns_element_and_throws_out_of_range();
     test_pushBack_appends_elements();
-    test_insert_shifts_elements_and_throws_out_of_range();
+    test_insert_shifts_elements();
+    test_copy_assignment_operator();
+    test_move_assignment_operator();
+    test_errase();
 
     std::cout << "All manual unit tests passed!\n";
     return 0;

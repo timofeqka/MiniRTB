@@ -1,6 +1,6 @@
 #pragma once
 #include <iostream>
-#include <exception>
+#include <stdexcept>
 
 namespace rtb {
 
@@ -98,14 +98,14 @@ public:
 
     T& at(size_t pos) {
         if (pos >= size_) {
-            throw std::out_of_range;
+            throw std::out_of_range("Vector::at index out of range");
         }
         return data_[pos];
     }
 
     T& at(size_t pos) const {
         if (pos >= size_) {
-            throw std::out_of_range;
+            throw std::out_of_range("Vector::at index out of range");
         }
         return data_[pos];
     }
@@ -126,7 +126,7 @@ public:
         data_[size_++] = value; 
     }
 
-    void insert(int pos, T value) {
+    void insert(size_t pos, T value) {
         if (size_ == capacity_){
             size_t newCapacity = (capacity_ == 0) ? 1 : capacity_ * VECTOR_CAPACITY_FACTOR;
             reallocate(newCapacity);
@@ -138,29 +138,11 @@ public:
         ++size_;
     }
 
-
+    void errase(size_t pos) {
+        for (size_t i = pos; i < size_; ++i) {
+            data_[i] = data_[i + 1];
+        }
+        --size_;
+    }
 };
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+} 
