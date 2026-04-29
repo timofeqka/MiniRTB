@@ -1,6 +1,10 @@
 #pragma once
+#include <cstddef>
+#include <initializer_list>
 #include <iostream>
+#include <new>
 #include <stdexcept>
+#include <utility>
 
 namespace rtb {
 
@@ -22,6 +26,10 @@ private:
         data_ = newData;
         capacity_ = newCapacity;
     }
+
+public:
+    using iterator       = T*; 
+    using const_iterator = const T*;
 
 public:
     Vector() {
@@ -75,7 +83,31 @@ public:
         }
         return *this;
     }
-    
+
+    ~Vector(){
+        if (data_ != nullptr){
+            delete[] data_;
+        }
+    }
+
+    // TO DO
+    // Vector(std::initializer_list<T> init) {
+    //     size_ = init.size();
+    // }
+
+    // TO DO
+    // Vector(size_t count, const T& value) {
+    //     size_ = count;
+    //     capacity_ = count;
+    // }
+
+    iterator       begin()        { return data_; }
+    iterator       end()          { return data_ + size_; }
+    const_iterator begin()  const { return data_; }
+    const_iterator end()    const { return data_ + size_; }
+    const_iterator cbegin() const { return data_; }
+    const_iterator cend()   const { return data_ + size_; }
+
     T* data(){
         return data_;
     }
@@ -118,12 +150,50 @@ public:
         return data_[pos];
     }
 
-    void pushBack(T value) {
-        if (size_ == capacity_){
+    T& front(){
+        if (empty()) {
+            throw std::out_of_range("Vector is empty");
+        }
+        return data_[0];
+    }
+
+    const T& front() const {
+        if (empty()) {
+            throw std::out_of_range("Vector is empty");
+        }
+        return data_[0];
+    }
+
+    T& back(){
+        if (empty()) {
+            throw std::out_of_range("Vector is empty");
+        }
+        return data_[size_ - 1];
+    }
+
+    const T& back() const {
+        if (empty()) {
+            throw std::out_of_range("Vector is empty");
+        }
+        return data_[size_ - 1];
+    }
+    
+    template <typename...TArgs>
+    T& emplace_back(TArgs&&...args){
+        if (size_ == capacity_) {
             size_t newCapacity = (capacity_ == 0) ? 1 : capacity_ * VECTOR_CAPACITY_FACTOR;
             reallocate(newCapacity);
         }
-        data_[size_++] = value; 
+        new(data_ + size_) T(std::forward<TArgs>(args)...);
+        return data_[size_++];
+    }
+
+    void pushBack(const T& value) {
+        emplace_back(value);
+    }
+
+    void pushBack(T&& value) {
+        emplace_back(std::move(value));
     }
 
     void insert(size_t pos, T value) {
@@ -139,10 +209,55 @@ public:
     }
 
     void errase(size_t pos) {
-        for (size_t i = pos; i < size_; ++i) {
-            data_[i] = data_[i + 1];
+        if (size_ > 0) {
+                for (size_t i = pos; i < size_; ++i) {
+                data_[i] = data_[i + 1];
+            }
+            --size_;
         }
+    }
+
+    void clear(){
+        for (size_t i = 0; i < size_; ++i) {
+            data_[i].~T();
+        }
+        size_ = 0;
+    }
+
+    void resize(size_t new_size) {
+        if (size_ > new_size){
+            for (size_t i = new_size; i < size_; ++i) {
+                data_[i].~T();
+            }
+        }
+        else if (size_ < new_size){
+            if (capacity_ < new_size) { reallocate(new_size); }
+
+            for (size_t i = size_; i < new_size; ++i) {
+                new (&data_[i]) T();
+            }
+        } 
+        size_ = new_size;
+    }
+    
+    void reserve(size_t new_capacity){
+        if (new_capacity <= capacity_) { return; }
+        reallocate(new_capacity);
+    }
+
+    void pop_back(){
+        data_[size_ - 1].~T();
         --size_;
     }
+
+    void swap(Vector& other){
+        std::swap(data_, other.data_);
+        std::swap(size_, other.size_);
+        std::swap(capacity_, other.capacity_);
+    }
+    
+//reserve
+//constructor Vector(std::initializer_list<T> init)
+//vector( size_type count, const T& value);
 };
 } 

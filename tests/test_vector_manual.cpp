@@ -317,7 +317,6 @@ void test_move_assignment_operator() {
 void test_errase() {
     // Arrange: create a vector with multiple elements
     rtb::Vector<int> v;
-
     v.pushBack(10);
     v.pushBack(20);
     v.pushBack(30);
@@ -347,6 +346,290 @@ void test_errase() {
     assert(v[2] == 50);
 }
 
+void test_swap_basic() {
+    // Arrange: create two vectors with different sizes and values
+    rtb::Vector<int> a;
+    a.pushBack(1);
+    a.pushBack(2);
+    a.pushBack(3);
+
+    rtb::Vector<int> b;
+    b.pushBack(10);
+    b.pushBack(20);
+
+    size_t a_size = a.size();
+    size_t b_size = b.size();
+
+    size_t a_capacity = a.capacity();
+    size_t b_capacity = b.capacity();
+
+    // Act: swap both vectors
+    a.swap(b);
+
+    // Assert: sizes, capacities, and values should be exchanged
+    assert(a.size() == b_size);
+    assert(b.size() == a_size);
+
+    assert(a.capacity() == b_capacity);
+    assert(b.capacity() == a_capacity);
+
+    assert(a[0] == 10);
+    assert(a[1] == 20);
+
+    assert(b[0] == 1);
+    assert(b[1] == 2);
+    assert(b[2] == 3);
+}
+
+void test_pop_back() {
+    // Arrange: create a vector with multiple elements
+    rtb::Vector<int> v;
+    v.pushBack(10);
+    v.pushBack(20);
+    v.pushBack(30);
+
+    size_t capacity_before = v.capacity();
+    size_t size_before = v.size();
+
+    // Act: remove the last element
+    v.pop_back();
+
+    // Assert: size should decrease while capacity and remaining values stay valid
+    assert(v.size() == size_before - 1);
+    assert(v.capacity() == capacity_before);
+
+    assert(v[0] == 10);
+    assert(v[1] == 20);
+
+    // Act + Assert: removing all elements should leave the vector empty
+    v.pop_back();
+    v.pop_back();
+
+    assert(v.size() == 0);
+    assert(v.capacity() == capacity_before);
+}
+
+void test_clear(){
+    // Arrange: create a vector with allocated storage and elements
+    rtb::Vector<int> v;
+    v.pushBack(10);
+    v.pushBack(20);
+    v.pushBack(30);
+
+    size_t capacity_before = v.capacity();
+
+    // Act: clear all elements
+    v.clear();
+
+    // Assert: size should reset but capacity should be kept
+    assert(v.size() == 0);
+    assert(v.capacity() == capacity_before);
+
+    // Act + Assert: vector should still be usable after clear
+    v.pushBack(100);
+
+    assert(v.size() == 1);
+    assert(v[0] == 100);
+} 
+
+void test_emplace_back() {
+    // Arrange: create an empty vector
+    rtb::Vector<int> v;
+
+    // Act: construct elements at the end
+    v.emplace_back(10);
+    v.emplace_back(20);
+
+    // Assert: emplaced values should be stored in order
+    assert(v.size() == 2);
+    assert(v[0] == 10);
+    assert(v[1] == 20);
+
+    size_t capacity_before = v.capacity();
+
+    // Act + Assert: adding another element should grow capacity when needed
+    v.emplace_back(30);
+
+    assert(v.capacity() > capacity_before);
+    assert(v.size() == 3);
+}
+
+void test_front() {
+    // Arrange: create a vector with multiple elements
+    rtb::Vector<int> v;
+    v.pushBack(10);
+    v.pushBack(20);
+    v.pushBack(30);
+
+    // Assert: front() should return the first element
+    assert(v.front() == 10);
+
+    // Act: modify the first element through front()
+    v.front() = 99;
+
+    // Assert: the first stored value should be updated
+    assert(v[0] == 99);
+}
+
+void test_back(){
+    // Arrange: create a vector with multiple elements
+    rtb::Vector<int> v;
+    v.pushBack(10);
+    v.pushBack(20);
+    v.pushBack(30);
+
+    // Assert: back() should return the last element
+    assert(v.back() == 30);
+    
+    // Act: modify the last element through back()
+    v.back() = 99;
+
+    // Assert: the last stored value should be updated
+    assert(v[2] == 99);
+}
+
+void test_front_back_empty_vector() {
+    // Arrange: create an empty vector
+    rtb::Vector<int> v;
+
+    // Act: try to read the front of an empty vector
+    bool exceptionThrown = false;
+    try {
+        v.front();
+    } catch (const std::out_of_range&) {
+        exceptionThrown = true;
+    }
+
+    // Assert: front() should throw std::out_of_range
+    assert(exceptionThrown);
+
+    // Act: try to read the back of an empty vector
+    exceptionThrown = false; 
+    try {
+        v.back();
+    } catch (const std::out_of_range&) {
+        exceptionThrown = true;
+    }
+
+    // Assert: back() should throw std::out_of_range
+    assert(exceptionThrown);
+}
+
+void test_resize() {
+    // Arrange: create a vector with existing values
+    rtb::Vector<int> v;
+    v.pushBack(10);
+    v.pushBack(20);
+    v.pushBack(30);
+    v.pushBack(40);
+
+    size_t capacity_before_shrink = v.capacity();
+
+    // Act: shrink the vector
+    v.resize(2);
+
+    // Assert: size should shrink while capacity and kept values remain
+    assert(v.size() == 2);
+    assert(v.capacity() == capacity_before_shrink);
+    assert(v[0] == 10);
+    assert(v[1] == 20);
+
+    // Act: grow the vector
+    v.resize(5);
+
+    // Assert: new int elements should be value-initialized to zero
+    assert(v.size() == 5);
+    assert(v[0] == 10);
+    assert(v[1] == 20);
+    assert(v[2] == 0);
+    assert(v[3] == 0);
+    assert(v[4] == 0);
+
+    size_t size_before_same = v.size();
+    size_t capacity_before_same = v.capacity();
+
+    // Act: resize to the current size
+    v.resize(5);
+
+    // Assert: size, capacity, and values should not change
+    assert(v.size() == size_before_same);
+    assert(v.capacity() == capacity_before_same);
+    assert(v[0] == 10);
+    assert(v[1] == 20);
+    assert(v[2] == 0);
+    assert(v[3] == 0);
+    assert(v[4] == 0);
+
+    // Act + Assert: resizing to zero should remove all elements but keep capacity
+    v.resize(0);
+
+    assert(v.size() == 0);
+    assert(v.capacity() == capacity_before_same);
+
+    // Act + Assert: growing from zero should create default values
+    v.resize(3);
+
+    assert(v.size() == 3);
+    assert(v[0] == 0);
+    assert(v[1] == 0);
+    assert(v[2] == 0);
+
+    size_t capacity_before_grow = v.capacity();
+
+    // Act + Assert: growing past capacity should reallocate
+    v.resize(100);
+
+    assert(v.size() == 100);
+    assert(v.capacity() >= 100);
+    assert(v.capacity() > capacity_before_grow);
+    assert(v[0] == 0);
+}
+
+void test_begin_end_basic(){
+    // Arrange: create an empty vector
+    rtb::Vector<int> v;
+
+    // Assert: begin and end should match for an empty vector
+    assert(v.begin() == v.end());
+
+    // Act: add elements
+    v.pushBack(10);
+    v.pushBack(20);
+    v.pushBack(30);
+
+    // Assert: iterators should point to the first element and one past the last
+    assert(*v.begin() == 10);
+    assert(*(v.end() - 1) == 30);
+}
+
+void test_reserve() {
+    // Arrange: create a vector with existing elements
+    rtb::Vector<int> v;
+    v.pushBack(1);
+    v.pushBack(2);
+
+    size_t size_before = v.size();
+    size_t capacity_before = v.capacity();
+
+    // Act: reserve more capacity than the vector currently has
+    v.reserve(10);
+
+    // Assert: capacity should grow while size and values stay the same
+    assert(v.size() == size_before);
+    assert(v.capacity() >= 10);
+    assert(v[0] == 1);
+    assert(v[1] == 2);
+
+    size_t capacity_now = v.capacity();
+
+    // Act: reserve less than the current capacity
+    v.reserve(5);
+
+    // Assert: capacity and size should not change
+    assert(v.capacity() == capacity_now);
+    assert(v.size() == size_before);
+}
+
 
 int main() {
     // Run all manual unit tests
@@ -359,9 +642,32 @@ int main() {
     test_at_returns_element_and_throws_out_of_range();
     test_pushBack_appends_elements();
     test_insert_shifts_elements();
+    test_copy_constructor();
+    test_move_constructor();
     test_copy_assignment_operator();
     test_move_assignment_operator();
     test_errase();
+    //~Vector()
+    //Vector(std::initializer_list<T> init)
+    //Vector(size_t count, const T& value)
+    test_begin_end_basic();
+    //const_iterator begin()  const { return data_; }
+    //const_iterator end()    const { return data_ + size_; }
+    //const_iterator cbegin() const { return data_; }
+    //const_iterator cend()   const { return data_ + size_; }
+    test_front();
+    test_back();
+    test_front_back_empty_vector();
+    //const T& front() const 
+    //const T& back() const
+    test_emplace_back();
+    //void pushBack(T&& value)
+    test_clear();
+    test_resize();
+    test_reserve();
+    test_pop_back();
+    test_swap_basic();
+
 
     std::cout << "All manual unit tests passed!\n";
     return 0;

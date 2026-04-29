@@ -10,7 +10,11 @@ The repository also contains JSON demo files for campaign data, but the root CMa
 - Custom `Vector` container implementation
 - Copy and move constructors
 - Copy and move assignment operators
+- Iterator-style access with raw pointer iterators
+- Checked and unchecked element access
 - Element insertion and erase behavior
+- Capacity management with automatic growth and `reserve()`
+- Resize, clear, pop, swap, front, back, and emplace operations
 - Manual unit tests for core data structures
 - CMake build configuration
 - JSON campaign demo files kept in the repository
@@ -45,16 +49,28 @@ This project includes a simplified implementation of a dynamic array similar to 
 
 ## Supported Operations
 - `pushBack()` - add element to the end
+- `emplace_back()` - construct an element at the end
 - `insert()` - insert element at position
+- `errase()` - remove value by its position
+- `pop_back()` - remove the last element
+- `clear()` - remove all elements while keeping capacity
+- `resize()` - change the number of stored elements
+- `reserve()` - grow storage capacity without changing size
+- `swap()` - exchange contents with another vector
 - `operator[]` - direct access (no bounds check)
 - `at()` - safe access (throws exception)
+- `front() / back()` - access first and last elements
+- `begin() / end() / cbegin() / cend()` - iterator access
 - `size() / capacity() / empty()`
 - `data()` - pointer to underlying storage
 - copy constructor
 - move constructor
 - copy assignment operator
 - move assignment operator
-- `errase()` - remove value by its position
+
+Not currently implemented:
+- initializer-list constructor
+- count-and-value constructor
 
 ## Testing
 Manual unit tests cover:
@@ -62,10 +78,13 @@ Manual unit tests cover:
 - size and capacity growth
 - memory layout (contiguous storage)
 - element access (`operator[]`, `at()`)
+- front and back access, including empty-vector exceptions
+- iterator basics (`begin()` and `end()`)
 - insertion logic and shifting
 - copy constructor behavior
 - move constructor behavior
 - copy assignment behavior
 - move assignment behavior
 - erase behavior
+- emplace, clear, resize, reserve, pop, and swap behavior
 - exception handling
