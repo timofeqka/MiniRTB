@@ -34,11 +34,11 @@ void test_size_updates_after_pushBack_and_insert(){
     assert(v.size() == 3);
 
     // Act + Assert: insert in the middle should increase size
-    v.insert(1, 7);
+    v.insert(v.begin() + 1, 7);
     assert(v.size() == 4);
 
     // Act + Assert: insert at the end should increase size
-    v.insert(v.size(), 100);
+    v.insert(v.end(), 100);
     assert(v.size() == 5);
 }
 
@@ -178,11 +178,11 @@ void test_insert_shifts_elements(){
     rtb::Vector<int> v;
 
     // Act: insert elements at beginning, middle, and end
-    v.insert(0, 5);           // [5]
-    v.insert(0, 10);          // [10, 5]
-    v.insert(1, 20);          // [10, 20, 5]
-    v.insert(1, 15);          // [10, 15, 20, 5]
-    v.insert(v.size(), 25);   // [10, 15, 20, 5, 25]
+    v.insert(0, 5);             // [5]
+    v.insert(0, 10);            // [10, 5]
+    v.insert(v.begin() + 1, 20);// [10, 20, 5]
+    v.insert(v.begin() + 1, 15);// [10, 15, 20, 5]
+    v.insert(v.end(), 25);      // [10, 15, 20, 5, 25]
 
     // Assert: insert should increase size and keep correct order
     assert(v.size() == 5);
@@ -667,6 +667,16 @@ int main() {
     test_reserve();
     test_pop_back();
     test_swap_basic();
+    //explicit Vector(size_t count)
+    //Vector(InputIt first, InputIt last)
+    //iterator insert(const_iterator pos, const T& value)
+    //void insert(const_iterator pos, const T&& value)
+    //insert &&
+    //emplace
+    //insert(pos, count, value)
+    //insert(pos, first, last)
+    //insert(pos, initList)
+    //errase(first, last)
 
 
     std::cout << "All manual unit tests passed!\n";
