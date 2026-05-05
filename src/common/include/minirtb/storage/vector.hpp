@@ -5,6 +5,7 @@
 #include <new>
 #include <stdexcept>
 #include <utility>
+#include <iterator>
 
 namespace rtb {
 
@@ -24,7 +25,7 @@ private:
 
         for (size_t i = 0; i < size_; ++i) {
             new(newData + i) T(std::move(data_[i]));
-            data[i].~T();
+            data_[i].~T();
         }
 
         ::operator delete(data_);
@@ -61,16 +62,22 @@ public:
         size_ = count;
     }
 
-    //to do
-    // Vector(size_t count, const T& value) {
-    //     size_ = count;
-    //     capacity_ = count;
-    // }
+    Vector(size_t count, const T& value) {
+        data_ = static_cast<T*>(::operator new(count * sizeof(T)));
+
+        for (size_t i = 0; i < count; ++i) {
+            new(data_ + i) T(value);
+        }
+
+        capacity_ = count; 
+        size_ = count;
+    }
 
     Vector(std::initializer_list<T> init) {
         size_ = init.size();
         capacity_ = init.size();
         data_ = static_cast<T*>(::operator new(size_ * sizeof(T)));
+
         size_t i = 0;
         for (const auto& elem : init){
             new(data_ + i) T(elem); 
@@ -81,17 +88,19 @@ public:
     template <typename InputIt>
     Vector(InputIt first, InputIt last) {
         size_t count = std::distance(first, last);
+
         size_ = count;
         capacity_ = count;
         data_ = static_cast<T*>(::operator new(count * sizeof(T)));
+
         size_t i = 0;
         for (auto it = first; it != last; ++it) {
-            new(data + i) T(*it);
+            new(data_ + i) T(*it);
             ++i;
         }
     }
 
-    ~Vector() {
+    ~Vector() noexcept {
         clear();
         ::operator delete(data_);
     }
@@ -100,14 +109,14 @@ public:
         data_ = static_cast<T*>(::operator new(other.capacity_ * sizeof(T)));
 
         for (size_t i = 0; i < other.size_; ++i){
-            data_[i] = other.data_[i];
+            new(data_ + i) T(other.data_[i]);
         }
 
         capacity_ = other.capacity_;
         size_     = other.size_;
     }
 
-    Vector(Vector&& other) {
+    Vector(Vector&& other) noexcept {
         data_     = other.data_;
         capacity_ = other.capacity_;
         size_     = other.size_;
@@ -119,20 +128,26 @@ public:
 
     Vector& operator=(const Vector& other) {
         if (this != &other) {
-            delete[] data_;
-            data_ = new T[other.capacity_];
+            clear();
+            ::operator delete(data_);
+
+            data_ = static_cast<T*>(::operator new(other.capacity_ * sizeof(T)));
+
             for (size_t i = 0; i < other.size_; ++i){
-                data_[i] = other.data_[i];
+                new(data_ + i) T(other.data_[i]);
             }
+
             capacity_ = other.capacity_;
             size_     = other.size_;
         }
         return *this;
     }
 
-    Vector& operator=(Vector&& other) {
+    Vector& operator=(Vector&& other) noexcept {
         if (this != &other) {
-            delete[] data_;
+            clear();
+            ::operator delete(data_);
+
             data_     = other.data_;
             capacity_ = other.capacity_;
             size_     = other.size_;
@@ -144,23 +159,23 @@ public:
         return *this;
     }
 
-    T* data(){
+    T* data() noexcept {
         return data_;
     }
 
-    const T* data() const {
+    const T* data() const noexcept {
         return data_;
     }
     
-    size_t size() const {
+    size_t size() const noexcept {
         return size_;
     }
 
-    size_t capacity() const{
+    size_t capacity() const noexcept {
         return capacity_;
     }
 
-    bool empty() const {
+    bool empty() const noexcept {
         return size_ == 0; 
     }
 
@@ -215,7 +230,27 @@ public:
     }
     
     template <typename...TArgs>
-    T& emplace_back(TArgs&&...args){
+    iterator emplace(const_iterator pos, TArgs&&...args) {
+        size_t index = pos - begin();
+
+        if (size_ == capacity_) {
+            size_t newCapacity = (capacity_ == 0) ? 1 : capacity_ * VECTOR_CAPACITY_FACTOR;
+            reallocate(newCapacity);
+        }
+
+        for (size_t i = size_; i > index; --i) {
+            new(data_ + i) T(std::move(data_[i - 1]));
+            data_[i - 1].~T();
+        }
+
+        new(data_ + size_) T(std::forward<TArgs>(args)...);
+        ++size_;
+
+        return begin() + index;
+    }
+
+    template <typename...TArgs>
+    T& emplace_back(TArgs&&...args) {
         if (size_ == capacity_) {
             size_t newCapacity = (capacity_ == 0) ? 1 : capacity_ * VECTOR_CAPACITY_FACTOR;
             reallocate(newCapacity);
@@ -224,11 +259,11 @@ public:
         return data_[size_++];
     }
 
-    void pushBack(const T& value) {
+    void push_back(const T& value) {
         emplace_back(value);
     }
 
-    void pushBack(T&& value) {
+    void push_back(T&& value) {
         emplace_back(std::move(value));
     }
 
@@ -241,21 +276,100 @@ public:
         }
 
         for (size_t i = size_; i > index; --i) {
-            new(data + i) T(std::move(data_[i - 1]));
+            new(data_ + i) T(std::move(data_[i - 1]));
             data_[i - 1].~T();
         }
 
-        new(data + index) T(value);
+        new(data_ + index) T(value);
         ++size_;
         return begin() + index;
     }
 
-    //to do
-    // void insert(const_iterator pos, const T&& value) {
+    iterator insert(const_iterator pos, const T&& value) {
+        size_t index = pos - begin();
+        
+        if (size_ == capacity_){
+            size_t newCapacity = (capacity_ == 0) ? 1 : capacity_ * VECTOR_CAPACITY_FACTOR;
+            reallocate(newCapacity);
+        }
 
-    // }
+        for (size_t i = size_; i > index; --i) {
+            new(data_ + i) T(std::move(data_[i - 1]));
+            data_[i - 1].~T();
+        }
 
-    void errase(size_t pos) {
+        new(data_ + index) T(std::move(value));
+        ++size_;
+        return begin() + index;
+    }
+
+    iterator insert(const_iterator pos, size_t count, const T& value) {
+        size_t index = pos - begin();
+
+        if (count == 0) { return begin() + index};
+
+        if (size_ + count > capacity_) {
+            size_t newCapacity = (capacity_ == 0) ? 1 : capacity_;
+
+            while(newCapacity < size_ + count) {
+                newCapacity *= VECTOR_CAPACITY_FACTOR;
+            }
+            
+            reallocate(newCapacity);
+        }
+
+        for (size_t i = size_; i > index; --i) {
+            new(data_ + i) T(std::move(data_[i - 1]));
+            data_[i - 1].~T();
+        }
+
+        for (size_t i = 0; i < count; ++i) {
+            new(data_ + index + i) T(value);
+        }
+
+        size_ += count;
+
+        return begin() + index;
+    }
+
+    template <typename InputIt>
+    iterator insert(const_iterator pos, InputIt first, InputIt last) {
+        size_t index = pos - begin();
+        size_t count = std::distance(first, last);
+
+        if (count == 0) { return begin() + index};
+
+        if (size_ + count > capacity_) {
+            size_t newCapacity = (capacity_ == 0) ? 1 : capacity_;
+
+            while(newCapacity < size_ + count) {
+                newCapacity *= VECTOR_CAPACITY_FACTOR;
+            }
+
+            reallocate(newCapacity);
+        }
+
+        for (size_t i = size_; i > index; --i) {
+            new(data_ + i) T(std::move(data_[i - 1]));
+            data_[i - 1].~T();
+        }
+
+        size_t i = 0;
+        for (auto it = first; it != last; ++it) {
+            new(data_ + i) T(*it);
+            ++i;
+        }
+
+        size_ += count;
+
+        return begin() + index;
+    }
+
+    iterator insert(const_iterator pos, std::initializer_list<T> init) {
+        return insert(pos, init.begin(), init.end());
+    }
+
+    void erase(size_t pos) {
         if (size_ > 0) {
                 for (size_t i = pos; i < size_; ++i) {
                 data_[i] = data_[i + 1];
@@ -264,7 +378,31 @@ public:
         }
     }
 
-    void clear(){
+    iterator erase(const_iterator first, const_iterator last) {
+        size_t indexFirst = first - begin();
+        size_t indexLast = last - begin();
+
+        if (indexFirst >= size_ || indexFirst >= indexLast) {
+            return begin() + indexFirst;
+        }
+
+        size_t count = indexLast - indexFirst;
+
+        for (size_t i = indexFirst; i + count < size_; ++i) {
+            data_[i].~T();
+            new(data_ + i) T(std::move(data_[i + count]));
+        }
+
+        for (size_t i = size_ - count; i < size_; i++) {
+            data_[i].~T();
+        }
+
+        size_ -= count;
+
+        return begin() + indexFirst;
+    }
+
+    void clear() noexcept {
         for (size_t i = 0; i < size_; ++i) {
             data_[i].~T();
         }
@@ -277,6 +415,7 @@ public:
                 data_[i].~T();
             }
         }
+
         else if (size_ < new_size){
             if (capacity_ < new_size) { reallocate(new_size); }
 
@@ -284,6 +423,7 @@ public:
                 new (&data_[i]) T();
             }
         } 
+
         size_ = new_size;
     }
     
@@ -298,18 +438,10 @@ public:
         --size_;
     }
 
-    void swap(Vector& other){
+    void swap(Vector& other) noexcept {
         std::swap(data_, other.data_);
         std::swap(size_, other.size_);
         std::swap(capacity_, other.capacity_);
     }
-
-//insert &&
-//emplace
-//insert(pos, count, value)
-//insert(pos, first, last)
-//insert(pos, initList)
-//errase(first, last)
-//vector( size_type count, const T& value);
 };
 } 

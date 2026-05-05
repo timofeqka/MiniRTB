@@ -328,19 +328,19 @@ void test_errase() {
     size_t size_before = v.size();
 
     // Act + Assert: erase first element and shift remaining elements left
-    v.errase(0); // 20 30 40 50 60
+    v.erase(0); // 20 30 40 50 60
     assert(v.capacity() == capacity_before);
     assert(v.size() == size_before - 1);
     assert(v[0] == 20); 
 
     // Act + Assert: erase middle element and keep capacity unchanged
-    v.errase(2); // 20 30 50 60 
+    v.erase(2); // 20 30 50 60 
     assert(v.capacity() == capacity_before);
     assert(v.size() == size_before - 2);
     assert(v[2] == 50);
 
     // Act + Assert: erase last element and keep remaining values in order
-    v.errase(3); // 20 30 50
+    v.erase(3); // 20 30 50
     assert(v.capacity() == capacity_before);
     assert(v.size() == size_before - 3);
     assert(v[2] == 50);
