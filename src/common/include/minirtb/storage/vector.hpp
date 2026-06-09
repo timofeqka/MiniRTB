@@ -6,13 +6,13 @@
 #include <stdexcept>
 #include <utility>
 #include <iterator>
+#include <type_traits>
 
 namespace rtb {
 
-#define VECTOR_CAPACITY_FACTOR 2
-
 template <typename T>
 class Vector {
+    static constexpr size_t VECTOR_CAPACITY_FACTOR = 2;
 private: 
     T*     data_;
     size_t capacity_;
@@ -24,6 +24,7 @@ private:
         T* newData = static_cast<T*>(::operator new(newCapacity * sizeof(T)));
 
         for (size_t i = 0; i < size_; ++i) {
+            //TODO
             new(newData + i) T(std::move(data_[i]));
             data_[i].~T();
         }
@@ -66,6 +67,7 @@ public:
         data_ = static_cast<T*>(::operator new(count * sizeof(T)));
 
         for (size_t i = 0; i < count; ++i) {
+        //TODO
             new(data_ + i) T(value);
         }
 
@@ -85,7 +87,11 @@ public:
         }
     }
 
-    template <typename InputIt>
+    template 
+    <
+        typename InputIt,
+        typename = std::enable_if_t<!std::is_integral_v<InputIt>>
+    >
     Vector(InputIt first, InputIt last) {
         size_t count = std::distance(first, last);
 
@@ -127,18 +133,23 @@ public:
     }
 
     Vector& operator=(const Vector& other) {
+        // if (this != &other) {
+        //     clear();
+        //     ::operator delete(data_);
+
+        //     data_ = static_cast<T*>(::operator new(other.capacity_ * sizeof(T)));
+
+        //     for (size_t i = 0; i < other.size_; ++i){
+        //         new(data_ + i) T(other.data_[i]);
+        //     }
+
+        //     capacity_ = other.capacity_;
+        //     size_     = other.size_;
+        // }
+        // return *this;
         if (this != &other) {
-            clear();
-            ::operator delete(data_);
-
-            data_ = static_cast<T*>(::operator new(other.capacity_ * sizeof(T)));
-
-            for (size_t i = 0; i < other.size_; ++i){
-                new(data_ + i) T(other.data_[i]);
-            }
-
-            capacity_ = other.capacity_;
-            size_     = other.size_;
+            Vector temp(other);
+            swap(temp);
         }
         return *this;
     }
@@ -186,7 +197,7 @@ public:
         return data_[pos];
     }
 
-    T& at(size_t pos) const {
+    const T& at(size_t pos) const {
         if (pos >= size_) {
             throw std::out_of_range("Vector::at index out of range");
         }
@@ -197,7 +208,7 @@ public:
         return data_[pos];
     }
 
-    T& operator[](size_t pos) const {
+    const T& operator[](size_t pos) const {
         return data_[pos];
     }
 
@@ -231,6 +242,7 @@ public:
     
     template <typename...TArgs>
     iterator emplace(const_iterator pos, TArgs&&...args) {
+        // precondition: pos is a valid iterator from this Vector
         size_t index = pos - begin();
 
         if (size_ == capacity_) {
@@ -243,7 +255,7 @@ public:
             data_[i - 1].~T();
         }
 
-        new(data_ + size_) T(std::forward<TArgs>(args)...);
+        new(data_ + index) T(std::forward<TArgs>(args)...);
         ++size_;
 
         return begin() + index;
@@ -285,7 +297,7 @@ public:
         return begin() + index;
     }
 
-    iterator insert(const_iterator pos, const T&& value) {
+    iterator insert(const_iterator pos, T&& value) {
         size_t index = pos - begin();
         
         if (size_ == capacity_){
@@ -306,7 +318,7 @@ public:
     iterator insert(const_iterator pos, size_t count, const T& value) {
         size_t index = pos - begin();
 
-        if (count == 0) { return begin() + index};
+        if (count == 0) { return begin() + index; }
 
         if (size_ + count > capacity_) {
             size_t newCapacity = (capacity_ == 0) ? 1 : capacity_;
@@ -319,7 +331,7 @@ public:
         }
 
         for (size_t i = size_; i > index; --i) {
-            new(data_ + i) T(std::move(data_[i - 1]));
+            new(data_ + i + count - 1) T(std::move(data_[i - 1]));
             data_[i - 1].~T();
         }
 
@@ -337,7 +349,7 @@ public:
         size_t index = pos - begin();
         size_t count = std::distance(first, last);
 
-        if (count == 0) { return begin() + index};
+        if (count == 0) { return begin() + index; }
 
         if (size_ + count > capacity_) {
             size_t newCapacity = (capacity_ == 0) ? 1 : capacity_;
@@ -350,13 +362,13 @@ public:
         }
 
         for (size_t i = size_; i > index; --i) {
-            new(data_ + i) T(std::move(data_[i - 1]));
+            new(data_ + i + count - 1) T(std::move(data_[i - 1]));
             data_[i - 1].~T();
         }
 
         size_t i = 0;
         for (auto it = first; it != last; ++it) {
-            new(data_ + i) T(*it);
+            new(data_ + index + i) T(*it);
             ++i;
         }
 
@@ -370,10 +382,13 @@ public:
     }
 
     void erase(size_t pos) {
+        // precondition: pos < size_
+
         if (size_ > 0) {
-                for (size_t i = pos; i < size_; ++i) {
+            for (size_t i = pos; i + 1 < size_; ++i) {
                 data_[i] = data_[i + 1];
             }
+            data_[size_ - 1].~T();
             --size_;
         }
     }

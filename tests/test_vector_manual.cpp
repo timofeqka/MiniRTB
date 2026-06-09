@@ -15,18 +15,18 @@ void test_constructor_initial_state(){
     assert(v.empty() == true);
 }
 
-void test_size_updates_after_pushBack_and_insert(){
+void test_size_updates_after_push_back_and_insert(){
     // Arrange: create an empty vector
     rtb::Vector<int> v;
 
     // Assert: initial size should be zero
     assert(v.size() == 0);
 
-    // Act + Assert: pushBack should increase size
-    v.pushBack(10);
+    // Act + Assert: push_back should increase size
+    v.push_back(10);
     assert(v.size() == 1);
 
-    v.pushBack(20);
+    v.push_back(20);
     assert(v.size() == 2);
 
     // Act + Assert: insert at the beginning should increase size
@@ -50,24 +50,24 @@ void test_capacity_grows_when_full(){
     assert(v.capacity() == 0);
     assert(v.capacity() >= v.size());
 
-    // Act + Assert: first pushBack should allocate capacity 1
-    v.pushBack(10);
+    // Act + Assert: first push_back should allocate capacity 1
+    v.push_back(10);
     assert(v.capacity() == 1);
     assert(v.capacity() >= v.size());
 
     // Act + Assert: capacity should double when vector becomes full
-    v.pushBack(20);
+    v.push_back(20);
     assert(v.capacity() == 2);
 
-    v.pushBack(30);
+    v.push_back(30);
     assert(v.capacity() == 4);
 
     // Act + Assert: capacity should not change while there is free space
-    v.pushBack(40);
+    v.push_back(40);
     assert(v.capacity() == 4);
 
     // Act + Assert: capacity should grow again when full
-    v.pushBack(50);
+    v.push_back(50);
     assert(v.capacity() == 8);
 
     // Assert: capacity should always be greater than or equal to size
@@ -83,7 +83,7 @@ void test_empty_reflects_size(){
     assert(v.size() == 0);
 
     // Act: add one element
-    v.pushBack(10);
+    v.push_back(10);
 
     // Assert: vector should no longer be empty
     assert(!v.empty());
@@ -98,14 +98,14 @@ void test_data_returns_contiguous_storage(){
     assert(v.data() == nullptr);
     
     // Act: add first element
-    v.pushBack(10);
+    v.push_back(10);
 
     // Assert: storage should now be allocated and contain the first element
     assert(v.data() != nullptr);
     assert(v.data()[0] == 10);
 
     // Act: add second element
-    v.pushBack(20);
+    v.push_back(20);
 
     // Assert: data should point to contiguous storage
     assert(v.data()[0] == 10);
@@ -120,8 +120,8 @@ void test_data_returns_contiguous_storage(){
 void test_subscript_operator_read_write(){
     // Arrange: create a vector with two elements
     rtb::Vector<int> v;
-    v.pushBack(10);
-    v.pushBack(20);
+    v.push_back(10);
+    v.push_back(20);
 
     // Assert: operator[] should allow reading elements
     assert(v.operator[](0) == 10);
@@ -139,8 +139,8 @@ void test_subscript_operator_read_write(){
 void test_at_returns_element_and_throws_out_of_range(){
     // Arrange: create a vector with two elements
     rtb::Vector<int> v;
-    v.pushBack(10);
-    v.pushBack(20);
+    v.push_back(10);
+    v.push_back(20);
 
     // Assert: at() should return valid elements
     assert(v.at(0) == 10);
@@ -158,13 +158,13 @@ void test_at_returns_element_and_throws_out_of_range(){
     assert(exceptionThrown);
 }
 
-void test_pushBack_appends_elements(){
+void test_push_back_appends_elements(){
     // Arrange: create an empty vector
     rtb::Vector<int> v;
 
     // Act: append two elements
-    v.pushBack(10);
-    v.pushBack(20);
+    v.push_back(10);
+    v.push_back(20);
 
     // Assert: elements should be appended in order
     assert(v.size() == 2);
@@ -208,8 +208,8 @@ void test_copy_constructor() {
 
     // Arrange: create a vector with two elements
     rtb::Vector<int> v1;
-    v1.pushBack(10);
-    v1.pushBack(20);
+    v1.push_back(10);
+    v1.push_back(20);
 
     // Act: copy the populated vector
     rtb::Vector<int> v2(v1);
@@ -233,8 +233,8 @@ void test_move_constructor() {
     // Arrange: create a vector with two elements
     rtb::Vector<int> v1;
 
-    v1.pushBack(10);
-    v1.pushBack(20);
+    v1.push_back(10);
+    v1.push_back(20);
 
     // Act: move the vector into a new vector
     rtb::Vector<int> v2(std::move(v1));
@@ -268,8 +268,8 @@ void test_copy_assignment_operator() {
 
     // Arrange: create a vector with two elements
     rtb::Vector<int> v1;
-    v1.pushBack(10);
-    v1.pushBack(20);
+    v1.push_back(10);
+    v1.push_back(20);
 
     // Act: assign the populated vector into another vector
     rtb::Vector<int> v2;
@@ -293,8 +293,8 @@ void test_copy_assignment_operator() {
 void test_move_assignment_operator() {
     // Arrange: create a vector with two elements
     rtb::Vector<int> v1;
-    v1.pushBack(10);
-    v1.pushBack(20);
+    v1.push_back(10);
+    v1.push_back(20);
 
     // Act: move-assign the vector into another vector
     rtb::Vector<int> v2;
@@ -317,12 +317,12 @@ void test_move_assignment_operator() {
 void test_errase() {
     // Arrange: create a vector with multiple elements
     rtb::Vector<int> v;
-    v.pushBack(10);
-    v.pushBack(20);
-    v.pushBack(30);
-    v.pushBack(40);
-    v.pushBack(50);
-    v.pushBack(60);
+    v.push_back(10);
+    v.push_back(20);
+    v.push_back(30);
+    v.push_back(40);
+    v.push_back(50);
+    v.push_back(60);
 
     size_t capacity_before = v.capacity();
     size_t size_before = v.size();
@@ -349,13 +349,13 @@ void test_errase() {
 void test_swap_basic() {
     // Arrange: create two vectors with different sizes and values
     rtb::Vector<int> a;
-    a.pushBack(1);
-    a.pushBack(2);
-    a.pushBack(3);
+    a.push_back(1);
+    a.push_back(2);
+    a.push_back(3);
 
     rtb::Vector<int> b;
-    b.pushBack(10);
-    b.pushBack(20);
+    b.push_back(10);
+    b.push_back(20);
 
     size_t a_size = a.size();
     size_t b_size = b.size();
@@ -384,9 +384,9 @@ void test_swap_basic() {
 void test_pop_back() {
     // Arrange: create a vector with multiple elements
     rtb::Vector<int> v;
-    v.pushBack(10);
-    v.pushBack(20);
-    v.pushBack(30);
+    v.push_back(10);
+    v.push_back(20);
+    v.push_back(30);
 
     size_t capacity_before = v.capacity();
     size_t size_before = v.size();
@@ -412,9 +412,9 @@ void test_pop_back() {
 void test_clear(){
     // Arrange: create a vector with allocated storage and elements
     rtb::Vector<int> v;
-    v.pushBack(10);
-    v.pushBack(20);
-    v.pushBack(30);
+    v.push_back(10);
+    v.push_back(20);
+    v.push_back(30);
 
     size_t capacity_before = v.capacity();
 
@@ -426,7 +426,7 @@ void test_clear(){
     assert(v.capacity() == capacity_before);
 
     // Act + Assert: vector should still be usable after clear
-    v.pushBack(100);
+    v.push_back(100);
 
     assert(v.size() == 1);
     assert(v[0] == 100);
@@ -457,9 +457,9 @@ void test_emplace_back() {
 void test_front() {
     // Arrange: create a vector with multiple elements
     rtb::Vector<int> v;
-    v.pushBack(10);
-    v.pushBack(20);
-    v.pushBack(30);
+    v.push_back(10);
+    v.push_back(20);
+    v.push_back(30);
 
     // Assert: front() should return the first element
     assert(v.front() == 10);
@@ -474,9 +474,9 @@ void test_front() {
 void test_back(){
     // Arrange: create a vector with multiple elements
     rtb::Vector<int> v;
-    v.pushBack(10);
-    v.pushBack(20);
-    v.pushBack(30);
+    v.push_back(10);
+    v.push_back(20);
+    v.push_back(30);
 
     // Assert: back() should return the last element
     assert(v.back() == 30);
@@ -518,10 +518,10 @@ void test_front_back_empty_vector() {
 void test_resize() {
     // Arrange: create a vector with existing values
     rtb::Vector<int> v;
-    v.pushBack(10);
-    v.pushBack(20);
-    v.pushBack(30);
-    v.pushBack(40);
+    v.push_back(10);
+    v.push_back(20);
+    v.push_back(30);
+    v.push_back(40);
 
     size_t capacity_before_shrink = v.capacity();
 
@@ -593,9 +593,9 @@ void test_begin_end_basic(){
     assert(v.begin() == v.end());
 
     // Act: add elements
-    v.pushBack(10);
-    v.pushBack(20);
-    v.pushBack(30);
+    v.push_back(10);
+    v.push_back(20);
+    v.push_back(30);
 
     // Assert: iterators should point to the first element and one past the last
     assert(*v.begin() == 10);
@@ -605,8 +605,8 @@ void test_begin_end_basic(){
 void test_reserve() {
     // Arrange: create a vector with existing elements
     rtb::Vector<int> v;
-    v.pushBack(1);
-    v.pushBack(2);
+    v.push_back(1);
+    v.push_back(2);
 
     size_t size_before = v.size();
     size_t capacity_before = v.capacity();
@@ -634,13 +634,13 @@ void test_reserve() {
 int main() {
     // Run all manual unit tests
     test_constructor_initial_state();
-    test_size_updates_after_pushBack_and_insert();
+    test_size_updates_after_push_back_and_insert();
     test_capacity_grows_when_full();
     test_empty_reflects_size();
     test_data_returns_contiguous_storage();
     test_subscript_operator_read_write();
     test_at_returns_element_and_throws_out_of_range();
-    test_pushBack_appends_elements();
+    test_push_back_appends_elements();
     test_insert_shifts_elements();
     test_copy_constructor();
     test_move_constructor();
@@ -661,7 +661,7 @@ int main() {
     //const T& front() const 
     //const T& back() const
     test_emplace_back();
-    //void pushBack(T&& value)
+    //void push_back(T&& value)
     test_clear();
     test_resize();
     test_reserve();
