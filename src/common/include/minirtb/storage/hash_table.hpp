@@ -111,7 +111,7 @@ public:
         , hasher_ {}
     {}
 
-    HashTable(size_t bucket_count) 
+    explicit HashTable(size_t bucket_count) 
         : buckets_(bucket_count == 0 ? DEFAULT_BUCKET_COUNT : bucket_count)
         , count_ {0}
         , hasher_ {}
@@ -161,7 +161,6 @@ public:
 
             other.count_ = 0;
         }
-
         return *this;
     }
 
@@ -309,8 +308,13 @@ public:
         }
     }
 
-    void reserve(size_t expected_count) {
-        buckets_.reserve(expected_count);
+    void reserve(size_t expected_capacity) {
+        buckets_.reserve(expected_capacity);
+    }
+
+    void resize(size_t new_bucket_count) {
+        if (bucket_count() > new_bucket_count) return;
+        rehash(new_bucket_count);
     }
 
     void rehash(size_t new_bucket_count) {

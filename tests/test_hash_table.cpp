@@ -794,6 +794,7 @@ int main() {
     test_clear();
     test_set_max_load_factor();
     test_reserve();
+    //test_resize();
     test_rehash();
 
     test_swap();
