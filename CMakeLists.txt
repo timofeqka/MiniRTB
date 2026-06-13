@@ -7,13 +7,13 @@ project(MiniRTB LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# add_executable(vector_tests
-#     tests/test_vector_manual.cpp
-# )
+add_executable(vector_tests
+    tests/test_vector_manual.cpp
+)
 
-# target_include_directories(vector_tests PRIVATE
-#     ${CMAKE_SOURCE_DIR}/src/common/include
-# )
+target_include_directories(vector_tests PRIVATE
+    ${CMAKE_SOURCE_DIR}/src/common/include
+)
 
 # add_executable(ring_buffer_tests
 #     tests/test_ring_buffer.cpp
@@ -23,10 +23,18 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 #     ${CMAKE_SOURCE_DIR}/src/common/include
 # )
 
-add_executable(hash_table_tests
-    tests/test_hash_table.cpp
-)
+# add_executable(hash_table_tests
+#     tests/test_hash_table.cpp
+# )
 
-target_include_directories(hash_table_tests PRIVATE
-    ${CMAKE_SOURCE_DIR}/src/common/include
-)
+# target_include_directories(hash_table_tests PRIVATE
+#     ${CMAKE_SOURCE_DIR}/src/common/include
+# )
+
+# add_executable(open_addressing_hash_table_tests
+#     tests/test_open_addressing_hash_table.cpp
+# )
+
+# target_include_directories(open_addressing_hash_table_tests PRIVATE
+#     ${CMAKE_SOURCE_DIR}/src/common/include
+# )

@@ -3,9 +3,10 @@
 #include <functional>
 #include <utility>
 #include <stdexcept>
+#include <cassert> //assert
 
-namespace rtb
-{
+namespace rtb {
+
 template
 <
     typename ElemType, 
@@ -26,7 +27,7 @@ private:
     {
         State    state_ = State::Empty;
         Key      key_;
-        ElemType data_; //std::optional<std::pair<Key, ElemType>>
+        ElemType data_; 
     };
     
     Vector<Bucket> buckets_;
@@ -37,6 +38,61 @@ private:
 
     size_t bucket_index(const Key& key) const {
         return hasher_(key) % buckets_.size();
+    }
+
+    template <typename Table> 
+    static decltype(auto) at_impl(Table& table, const Key& key) {
+        auto* bucket = find_slot_impl(table, key); 
+
+        if (bucket == nullptr) {
+            throw std::out_of_range("FlatHashTable::at: key not found");
+        }
+
+        return (bucket->data_);
+    }
+
+    template <typename Table>
+    static auto* find_slot_impl(Table& table, const Key& key)
+    {
+        size_t start = table.bucket_index(key); 
+
+        for (size_t offset = 0; offset < table.buckets_.size(); ++offset) {
+            size_t index = (start + offset) % table.buckets_.size();
+            auto& bucket = table.buckets_[index];
+
+            if (bucket.state_ == State::Empty) {
+                return static_cast<decltype(&table.buckets_[0])>(nullptr);
+            }
+
+            if (bucket.state_ == State::Occupied && bucket.key_ == key) {
+                return &bucket;
+            }
+        }
+        return static_cast<decltype(&table.buckets_[0])>(nullptr);;
+    }
+
+    Bucket* find_insert_slot(const Key& key) {
+        size_t start = bucket_index(key);
+        Bucket* deleted = nullptr;
+
+        for (size_t offset = 0; offset < buckets_.size(); ++offset) {
+            size_t index = (start + offset) % buckets_.size();
+            Bucket& bucket = buckets_[index];
+        
+            if (bucket.state_ == State::Occupied && bucket.key_ == key) {
+                return &bucket;
+            }
+
+            if (bucket.state_ == State::Deleted && deleted == nullptr) {
+                deleted = &bucket;
+                continue;
+            }
+
+            if (bucket.state_ == State::Empty) {
+                return deleted != nullptr ? deleted : &bucket;
+            }
+        }
+        return deleted;
     }
 
 public:
@@ -96,18 +152,20 @@ public:
         return *this;
     }
 
-    ~FlatHashTable() = default;
+    ~FlatHashTable() {
+        clear();
+    };
 
     size_t size() const {
         return count_;
     }
 
-    bool empty() const {
-        return count_ == 0;
-    }
-
     size_t bucket_count() const {
        return buckets_.size();
+    }
+
+    bool empty() const {
+        return count_ == 0;
     }
 
     float load_factor() const noexcept {
@@ -119,41 +177,92 @@ public:
         return max_load_factor_;
     }
 
-    void set_max_load_factor(float value) {
-        if (value <= 0.0f || value > 1.0f) {
-            throw std::invalid_argument("max_load_factor must be > 0.0 and <= 1.0");
-        }
-
-        max_load_factor_ = value;
-
-        if (load_factor() > max_load_factor_) {
-            rehash(buckets_.size() * BUCKET_GROWTH_FACTOR);
-        }
+    bool contains(const Key& key) const {
+        return find_slot_impl(*this, key) != nullptr;
     }
 
-    void insert(const Key& key, const ElemType& data) {
+    ElemType& at(const Key& key) {
+        return at_impl(*this, key);
+    }
+
+    const ElemType& at(const Key& key) const {
+        return at_impl(*this, key);
+    }
+
+    ElemType* find(const Key& key) {
+        Bucket* bucket = find_slot_impl(*this, key); 
+        return bucket == nullptr ? nullptr : &bucket->data_;
+    }
+
+    const ElemType* find(const Key& key) const {
+        const Bucket* bucket = find_slot_impl(*this, key); 
+        return bucket == nullptr ? nullptr : &bucket->data_;
+    }
+
+    template <typename... Args>
+    void emplace(const Key& key, Args&&... args) {
         if ((count_ + 1) > max_load_factor_ * buckets_.size()) {
             rehash(buckets_.size() * BUCKET_GROWTH_FACTOR);
         }
 
-        size_t start  = bucket_index(key);
+        Bucket* bucket = find_insert_slot(key);
 
-        for (size_t offset = 0; offset < buckets_.size(); ++offset) {
-            size_t index = (start + offset) % buckets_.size();
+        //assert(bucket != nullptr);
 
-            if (buckets_[index].state_ == State::Occupied) {
-                if (buckets_[index].key_ == key) {
-                    return;
-                }
-                continue;
-            }
-            
-            buckets_[index].key_   = key;
-            buckets_[index].data_  = data;
-            buckets_[index].state_ = State::Occupied;
-            ++count_;
+        if (bucket->state_ == State::Occupied) {
             return;
+        } else {
+            bucket->key_   = key;
+            bucket->data_  = ElemType(std::forward<Args>(args)...);
+            bucket->state_ = State::Occupied;
+            ++count_;
         }
+    }
+
+    void insert(const Key& key, const ElemType& data) {
+        emplace(key, data);
+    }
+
+    void insert(const Key& key, ElemType&& data) {
+        emplace(key, std::move(data));
+    }
+
+    void insert_or_assign(const Key& key, const ElemType& data) {
+        Bucket* bucket = find_insert_slot(key);
+        assert(bucket != nullptr);
+
+        if (bucket->state_ == State::Occupied) {
+            bucket->data_ = data;
+        } else {
+            if ((count_ + 1) > max_load_factor_ * buckets_.size()) {
+                rehash(buckets_.size() * BUCKET_GROWTH_FACTOR);
+                bucket = find_insert_slot(key);
+                assert(bucket != nullptr);
+            }
+            bucket->key_ = key;
+            bucket->data_ = data;
+            bucket->state_ = State::Occupied;
+            ++count_;
+        }        
+    }
+
+    void insert_or_assign(const Key& key, ElemType&& data) {
+        Bucket* bucket = find_insert_slot(key);
+        assert(bucket != nullptr);
+
+        if (bucket->state_ == State::Occupied) {
+            bucket->data_ = std::move(data);
+        } else {
+            if ((count_ + 1) > max_load_factor_ * buckets_.size()) {
+                rehash(buckets_.size() * BUCKET_GROWTH_FACTOR);
+                bucket = find_insert_slot(key);
+                assert(bucket != nullptr);
+            }
+            bucket->key_ = key;
+            bucket->data_ = std::move(data);
+            bucket->state_ = State::Occupied;
+            ++count_;
+        }      
     }
 
     bool erase(const Key& key) {
@@ -177,46 +286,32 @@ public:
         return false;
     }
 
-    ElemType* find(const Key& key) {
-        size_t start = bucket_index(key);
-        
-        for (size_t offset = 0; offset < buckets_.size(); ++offset) {
-            size_t index = (start + offset) % buckets_.size();
-
-            if (buckets_[index].state_ == State::Empty) {
-                return nullptr;
-            }
-
-            if (buckets_[index].state_ == State::Occupied) {
-                if (buckets_[index].key_ == key) {
-                    return &buckets_[index].data_;
-                }
-            }
+    void clear() noexcept {
+        for (size_t i = 0; i < buckets_.size(); ++i) {
+            buckets_[i].state_ = State::Empty;
         }
-        return nullptr;
+        count_ = 0; 
+    }  
+
+    void set_max_load_factor(float value) {
+        if (value <= 0.0f || value > 1.0f) {
+            throw std::invalid_argument("max_load_factor must be > 0.0 and <= 1.0");
+        }
+
+        max_load_factor_ = value;
+
+        if (load_factor() > max_load_factor_) {
+            rehash(buckets_.size() * BUCKET_GROWTH_FACTOR);
+        }
     }
 
-    const ElemType* find(const Key& key) const {
-        size_t start = bucket_index(key);
-        
-        for (size_t offset = 0; offset < buckets_.size(); ++offset) {
-            size_t index = (start + offset) % buckets_.size();
-
-            if (buckets_[index].state_ == State::Empty) {
-                return nullptr;
-            }
-
-            if (buckets_[index].state_ == State::Occupied) {
-                if (buckets_[index].key_ == key) {
-                    return &buckets_[index].data_;
-                }
-            }
-        }
-        return nullptr;
+    void reserve(size_t expected_capacity) {
+        buckets_.reserve(expected_capacity);
     }
 
-    bool contains(const Key& key) const {
-        return find(key) != nullptr;
+    void resize(size_t new_bucket_count) {
+        if (bucket_count() > new_bucket_count) return;
+        rehash(new_bucket_count);
     }
 
     void rehash(size_t new_buckets_count) {
@@ -246,30 +341,12 @@ public:
         buckets_.swap(new_buckets);
     }
 
-    void reserve(size_t expected_capacity) {
-        buckets_.reserve(expected_capacity);
-    }
-
-    void resize(size_t new_bucket_count) {
-        if (bucket_count() > new_bucket_count) return;
-        rehash(new_bucket_count);
-    }
-
     void swap(FlatHashTable& other) noexcept {
         buckets_.swap(other.buckets_);
         std::swap(count_, other.count_);
         std::swap(hasher_, other.hasher_);
         std::swap(max_load_factor_, other.max_load_factor_);
     }
-
-    void clear() noexcept {
-        for (size_t i = 0; i < buckets_.size(); ++i) {
-            buckets_[i].state_ = State::Empty;
-        }
-        count_ = 0; 
-    }
-
-    
 };
 
 } // namespace rtb

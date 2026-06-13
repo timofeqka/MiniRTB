@@ -106,11 +106,6 @@ public:
         }
     }
 
-    ~Vector() noexcept {
-        clear();
-        ::operator delete(data_);
-    }
-
     Vector(const Vector& other) {
         data_ = static_cast<T*>(::operator new(other.capacity_ * sizeof(T)));
 
@@ -170,14 +165,11 @@ public:
         return *this;
     }
 
-    T* data() noexcept {
-        return data_;
+    ~Vector() noexcept {
+        clear();
+        ::operator delete(data_);
     }
 
-    const T* data() const noexcept {
-        return data_;
-    }
-    
     size_t size() const noexcept {
         return size_;
     }
@@ -188,6 +180,14 @@ public:
 
     bool empty() const noexcept {
         return size_ == 0; 
+    }
+
+    T* data() noexcept {
+        return data_;
+    }
+
+    const T* data() const noexcept {
+        return data_;
     }
 
     T& at(size_t pos) {
@@ -241,6 +241,24 @@ public:
     }
     
     template <typename...TArgs>
+    T& emplace_back(TArgs&&...args) {
+        if (size_ == capacity_) {
+            size_t newCapacity = (capacity_ == 0) ? 1 : capacity_ * VECTOR_CAPACITY_FACTOR;
+            reallocate(newCapacity);
+        }
+        new(data_ + size_) T(std::forward<TArgs>(args)...);
+        return data_[size_++];
+    }
+
+    void push_back(const T& value) {
+        emplace_back(value);
+    }
+
+    void push_back(T&& value) {
+        emplace_back(std::move(value));
+    }
+
+    template <typename...TArgs>
     iterator emplace(const_iterator pos, TArgs&&...args) {
         // precondition: pos is a valid iterator from this Vector
         size_t index = pos - begin();
@@ -259,24 +277,6 @@ public:
         ++size_;
 
         return begin() + index;
-    }
-
-    template <typename...TArgs>
-    T& emplace_back(TArgs&&...args) {
-        if (size_ == capacity_) {
-            size_t newCapacity = (capacity_ == 0) ? 1 : capacity_ * VECTOR_CAPACITY_FACTOR;
-            reallocate(newCapacity);
-        }
-        new(data_ + size_) T(std::forward<TArgs>(args)...);
-        return data_[size_++];
-    }
-
-    void push_back(const T& value) {
-        emplace_back(value);
-    }
-
-    void push_back(T&& value) {
-        emplace_back(std::move(value));
     }
 
     iterator insert(const_iterator pos, const T& value) {
@@ -344,7 +344,11 @@ public:
         return begin() + index;
     }
 
-    template <typename InputIt>
+    template 
+    <
+        typename InputIt,
+        typename = std::enable_if_t<!std::is_integral_v<InputIt>>
+    >
     iterator insert(const_iterator pos, InputIt first, InputIt last) {
         size_t index = pos - begin();
         size_t count = std::distance(first, last);
@@ -379,6 +383,11 @@ public:
 
     iterator insert(const_iterator pos, std::initializer_list<T> init) {
         return insert(pos, init.begin(), init.end());
+    }
+
+    void pop_back(){
+        data_[size_ - 1].~T();
+        --size_;
     }
 
     void erase(size_t pos) {
@@ -424,6 +433,12 @@ public:
         size_ = 0;
     }
 
+    void reserve(size_t new_capacity){
+        if (new_capacity > capacity_) { 
+            reallocate(new_capacity); 
+        }
+    }
+
     void resize(size_t new_size) {
         if (size_ > new_size){
             for (size_t i = new_size; i < size_; ++i) {
@@ -440,17 +455,6 @@ public:
         } 
 
         size_ = new_size;
-    }
-    
-    void reserve(size_t new_capacity){
-        if (new_capacity > capacity_) { 
-            reallocate(new_capacity); 
-        }
-    }
-
-    void pop_back(){
-        data_[size_ - 1].~T();
-        --size_;
     }
 
     void swap(Vector& other) noexcept {

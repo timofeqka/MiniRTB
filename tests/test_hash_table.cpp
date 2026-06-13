@@ -254,6 +254,26 @@ void test_size() {
     assert(table.empty() == true);
 }
 
+void test_bucket_count() {
+    rtb::HashTable<int, int> table(3);
+
+    assert(table.bucket_count() == 3);
+
+    table.insert(1, 100);
+    assert(table.bucket_count() == 3);
+    table.insert(2, 200);
+    assert(table.bucket_count() == 3);
+
+    table.erase(1);
+    assert(table.bucket_count() == 3);
+
+    table.rehash(10);
+    assert(table.bucket_count() == 10);
+
+    table.clear();
+    assert(table.bucket_count() == 10);
+}
+
 void test_empty() {
     rtb::HashTable<int, int> table;
     assert(table.empty() == true);
@@ -582,6 +602,7 @@ void test_const_insert_or_assign() {
     assert(table.size() == 1);
     assert(table.at(1) == 999);
 }
+
 void test_erase() {
     rtb::HashTable<int, int> table;
     table.erase(1);
@@ -688,6 +709,27 @@ void test_reserve() {
     assert(table.at(2) == 200);
 }
 
+void test_resize() {
+    rtb::HashTable<int, int> table;
+
+    table.insert(1, 10);
+    table.insert(2, 20);
+
+    size_t old_bucket_count = table.bucket_count();
+
+    table.resize(old_bucket_count * 2);
+
+    assert(table.bucket_count() == old_bucket_count * 2);
+    assert(table.size() == 2);
+    assert(table.at(1) == 10);
+    assert(table.at(2) == 20);
+
+    table.resize(old_bucket_count);
+
+    assert(table.bucket_count() == old_bucket_count * 2);
+    assert(table.size() == 2);
+}
+
 void test_rehash() {
     rtb::HashTable<int, int> table;
 
@@ -731,7 +773,6 @@ void test_rehash() {
 }
 
 void test_swap() {
-    // swap двух непустых таблиц
     rtb::HashTable<int, int> first;
     rtb::HashTable<int, int> second;
 
@@ -776,9 +817,11 @@ int main() {
     test_rule_of_five_basic();
     
     test_size();
+    test_bucket_count();
     test_empty();
     test_load_factor();
     test_max_load_factor();
+
     test_contains();
     test_find();
     test_const_find();
@@ -788,13 +831,18 @@ int main() {
     test_emplace();
     test_insert();
     test_const_insert();
+
     test_insert_or_assign();
     test_const_insert_or_assign();
+
     test_erase();
+
     test_clear();
+
     test_set_max_load_factor();
+
     test_reserve();
-    //test_resize();
+    test_resize();
     test_rehash();
 
     test_swap();

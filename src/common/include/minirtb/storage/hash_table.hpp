@@ -172,6 +172,10 @@ public:
         return count_;
     }
 
+    size_t bucket_count() const {
+        return buckets_.size(); 
+    }
+
     bool empty() const noexcept {
         return count_ == 0;
     }
@@ -207,15 +211,15 @@ public:
 
     template <typename... Args>
     void emplace(const Key& key, Args&&... args) {
+        if ((count_ + 1) > max_load_factor_ * buckets_.size()) {
+            rehash(buckets_.size() * BUCKET_GROWTH_FACTOR);
+            // slot = find_slot(key);
+        }
+        
         Node** slot = find_slot(key);
 
         if (*slot != nullptr) {
             return;
-        }
-
-        if ((count_ + 1) > max_load_factor_ * buckets_.size()) {
-            rehash(buckets_.size() * BUCKET_GROWTH_FACTOR);
-            slot = find_slot(key);
         }
 
         *slot = new Node(key, std::forward<Args>(args)...);
